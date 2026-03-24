@@ -1,98 +1,98 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# OrderFlow API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST para gerenciamento de pedidos com controle de status e histórico. Desenvolvida com NestJS + MongoDB Atlas como atividade final da disciplina de Desenvolvimento de Software em Nuvem (ADS/IA — Unifor).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+- **Back-end:** NestJS 11 (TypeScript)
+- **Banco de dados:** MongoDB Atlas via Mongoose
+- **Autenticação:** JWT + Passport
+- **Documentação:** Swagger/OpenAPI em `/api`
+- **Containerização:** Docker (multi-stage build)
+- **CI/CD:** GitHub Actions → GitHub Container Registry → Railway
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Funcionalidades
 
-## Project setup
+- Cadastro e autenticação de usuários com dois perfis: `CUSTOMER` e `ADMIN`
+- Catálogo de produtos com CRUD (rotas de escrita restritas ao admin)
+- Criação de pedidos com validação de estoque e cópia de preço histórico
+- Máquina de estados: `PENDING → PROCESSING → SHIPPED → DELIVERED / CANCELLED`
+- Histórico de status embutido em cada pedido com timestamp e responsável
+- Cancelamento de pedido pelo próprio cliente (apenas em `PENDING`)
 
-```bash
-$ npm install
-```
+## Endpoints
 
-## Compile and run the project
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| POST | `/auth/register` | Cria conta de cliente | Público |
+| POST | `/auth/login` | Autentica e retorna JWT | Público |
+| GET | `/products` | Lista produtos ativos | Público |
+| GET | `/products/:id` | Detalhe de um produto | Público |
+| POST | `/products` | Cria produto | ADMIN |
+| PATCH | `/products/:id` | Atualiza produto | ADMIN |
+| DELETE | `/products/:id` | Desativa produto | ADMIN |
+| POST | `/orders` | Cria pedido | CUSTOMER |
+| GET | `/orders/my` | Meus pedidos | CUSTOMER |
+| GET | `/orders` | Todos os pedidos | ADMIN |
+| GET | `/orders/:id` | Detalhe de um pedido | JWT |
+| PATCH | `/orders/:id/status` | Avança status | ADMIN |
+| DELETE | `/orders/:id` | Cancela pedido | CUSTOMER |
 
-```bash
-# development
-$ npm run start
+## Rodando localmente
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+**Com Docker (recomendado):**
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose up --build
 ```
 
-## Deployment
+A API sobe em `http://localhost:3000` e o Swagger em `http://localhost:3000/api`. O MongoDB local é provisionado automaticamente pelo compose.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+**Sem Docker:**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
+# edite .env com sua string de conexão do MongoDB Atlas
+
+npm install
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Variáveis de ambiente
 
-## Resources
+| Variável | Descrição |
+|----------|-----------|
+| `MONGODB_URI` | String de conexão do MongoDB Atlas |
+| `JWT_SECRET` | Segredo para assinar tokens (mín. 32 caracteres) |
+| `JWT_EXPIRES_IN` | Expiração do token (ex: `86400s`) |
+| `PORT` | Porta do servidor (padrão: `3000`) |
+| `NODE_ENV` | `development` ou `production` |
 
-Check out a few resources that may come in handy when working with NestJS:
+## Testes
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npm test              # testes unitários
+npm run test:cov      # com relatório de cobertura (output: coverage/)
+npm run test:e2e      # testes end-to-end
+```
 
-## Support
+## Deploy
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+O pipeline de CI/CD é gerenciado pelo GitHub Actions:
 
-## Stay in touch
+- **Push em qualquer branch com PR aberto** → roda testes e lint
+- **Merge em `main`** → testa, constrói imagem Docker, faz push para `ghcr.io` e dispara deploy no Railway
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Para configurar o deploy, adicione o secret `RAILWAY_DEPLOY_WEBHOOK` em **Settings → Secrets and variables → Actions** no repositório.
 
-## License
+## Estrutura do projeto
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+src/
+├── auth/           # Registro, login, JWT strategy, guards e decorators
+├── users/          # Schema e serviço de usuários (interno ao AuthModule)
+├── products/       # CRUD de produtos com soft delete
+├── orders/         # Pedidos, máquina de estados e histórico embutido
+└── common/         # HttpExceptionFilter e ParseObjectIdPipe
+```
+
